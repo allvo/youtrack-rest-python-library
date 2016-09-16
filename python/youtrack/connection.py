@@ -13,6 +13,7 @@ import json
 import urllib2_file
 import tempfile
 import functools
+import re
 
 def urlquote(s):
     return urllib.quote(utf8encode(s), safe="")
@@ -21,6 +22,11 @@ def utf8encode(source):
     if isinstance(source, unicode):
         source = source.encode('utf-8')
     return source
+
+_illegal_xml_chars_RE = re.compile(u'[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFFFE\uFFFF]')
+
+def escape_xml_illegal_chars(val, replacement='?'):
+    return _illegal_xml_chars_RE.sub(replacement, val)
 
 def relogin_on_401(f):
     @functools.wraps(f)
@@ -405,7 +411,7 @@ class Connection(object):
                             ca = ca.encode('utf-8')
                         if isinstance(val, unicode):
                             val = val.encode('utf-8')
-                        record += ' ' + ca + '=' + quoteattr(val)
+                        record += ' ' + ca + '=' + escape_xml_illegal_chars(quoteattr(val))
                     record += '/>\n'
 
             record += '  </issue>\n'
